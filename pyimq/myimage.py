@@ -30,33 +30,33 @@ def get_options(parser):
     group.add_argument(
         "--imagej",
         help="Defines wheter the image are in ImageJ tiff format, "
-             "and thus contain the pixel size info etc in the TIFF tags. "
-             "By default true",
-        action="store_true"
+        "and thus contain the pixel size info etc in the TIFF tags. "
+        "By default true",
+        action="store_true",
     )
     group.add_argument(
         "--rgb-channel",
         help="Select which channel in an RGB image is to be used for quality"
-             " analysis",
+        " analysis",
         dest="rgb_channel",
         type=int,
         choices=[0, 1, 2],
-        default=1
+        default=1,
     )
-     # File filtering for batch mode processing
+    # File filtering for batch mode processing
     parser.add_argument(
         "--average-filter",
         dest="average_filter",
         type=int,
         default=0,
         help="Analyze only images with similar amount of detail, by selecting a "
-             "grayscale average pixel value threshold here"
+        "grayscale average pixel value threshold here",
     )
     parser.add_argument(
         "--file-filter",
         dest="file_filter",
         default=None,
-        help="Define a common string in the files to be analysed"
+        help="Define a common string in the files to be analysed",
     )
     return parser
 
@@ -75,7 +75,7 @@ class MyImage(object):
         :return:     An object of the MyImage class
         """
         assert os.path.isfile(path)
-        assert path.endswith(('.tif', '.tiff'))
+        assert path.endswith((".tif", ".tiff"))
         image = Image.open(path)
 
         image.tag[X_RESOLUTION]
@@ -89,7 +89,7 @@ class MyImage(object):
         if data.shape[0] == 1:
             data = data[0]
 
-        return cls(images=data, spacing=[1.0/xresolution, 1.0/yresolution])
+        return cls(images=data, spacing=[1.0 / xresolution, 1.0 / yresolution])
 
     @classmethod
     def get_generic_image(cls, path):
@@ -103,10 +103,9 @@ class MyImage(object):
         assert os.path.isfile(path)
 
         image = numpy.array(Image.open(path))
-        #image = utils.rescale_to_min_max(image, 0, 255)
+        # image = utils.rescale_to_min_max(image, 0, 255)
 
         return cls(images=image, spacing=[1, 1])
-
 
     def __init__(self, images=None, spacing=None):
 
@@ -115,11 +114,11 @@ class MyImage(object):
 
         power = log10(spacing[0])
         if 3 < power <= 6:
-            self.spacing_unit = 'um'
+            self.spacing_unit = "um"
         elif 6 < power <= 9:
-            self.spacing_unit = 'nm'
+            self.spacing_unit = "nm"
         else:
-            self.spacing_unit = 'not_def'
+            self.spacing_unit = "not_def"
 
         self.data_type = self.images.dtype
 
@@ -129,7 +128,7 @@ class MyImage(object):
     def __mul__(self, other):
         if isinstance(other, MyImage):
             return MyImage(self.images * other.images, self.spacing)
-        elif isinstance(other, (long, int, float, numpy.ndarray)):
+        elif isinstance(other, (int, float, numpy.ndarray)):
             return MyImage(self.images * other, self.spacing)
         else:
             return None
@@ -137,7 +136,11 @@ class MyImage(object):
     def __sub__(self, other):
         assert isinstance(other, MyImage)
         assert other.get_dimensions() == self.get_dimensions()
-        result = (self.images.astype(numpy.int16) - other.images).clip(0, 255).astype(numpy.uint8)
+        result = (
+            (self.images.astype(numpy.int16) - other.images)
+            .clip(0, 255)
+            .astype(numpy.uint8)
+        )
         return MyImage(result, self.spacing)
 
     def get_spacing(self):
@@ -203,11 +206,11 @@ class MyImage(object):
         dims = self.images.shape
 
         if dims[0] > dims[1]:
-            diff = 0.5*(dims[0]-dims[1])
-            self.images = self.images[int(floor(diff)): -int(ceil(diff)), :]
+            diff = 0.5 * (dims[0] - dims[1])
+            self.images = self.images[int(floor(diff)) : -int(ceil(diff)), :]
         elif dims[1] > dims[0]:
-            diff = 0.5*(dims[1]-dims[0])
-            self.images = self.images[:, int(floor(diff)): -int(ceil(diff))]
+            diff = 0.5 * (dims[1] - dims[0])
+            self.images = self.images[:, int(floor(diff)) : -int(ceil(diff))]
 
     def resize(self, size):
         """
@@ -217,15 +220,8 @@ class MyImage(object):
 
         """
         assert isinstance(size, tuple)
-        zoom = [float(a)/b for a, b in zip(size, self.images.shape)]
-        print("The zoom is %s" % zoom)
+        zoom = [float(a) / b for a, b in zip(size, self.images.shape)]
+        print(("The zoom is %s" % zoom))
 
         self.images = itp.zoom(self.images, tuple(zoom), order=3)
-
-
-
-
-
-
-
 

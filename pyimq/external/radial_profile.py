@@ -1,9 +1,21 @@
 import numpy as np
 
+
 def azimuthalAverage(
-        image, center=None, stddev=False, returnradii=False, return_nr=False,
-        binsize=0.5, weights=None, steps=False, interpnan=False, left=None,
-        right=None, mask=None, normalize=False, sum_bin=False
+    image,
+    center=None,
+    stddev=False,
+    returnradii=False,
+    return_nr=False,
+    binsize=0.5,
+    weights=None,
+    steps=False,
+    interpnan=False,
+    left=None,
+    right=None,
+    mask=None,
+    normalize=False,
+    sum_bin=False,
 ):
     """
     Calculate the azimuthally averaged radial profile.
@@ -38,7 +50,7 @@ def azimuthalAverage(
     y, x = np.indices(image.shape)
 
     if center is None:
-        center = np.array([(x.max()-x.min())/2.0, (y.max()-y.min())/2.0])
+        center = np.array([(x.max() - x.min()) / 2.0, (y.max() - y.min()) / 2.0])
 
     # Convert FFT image into polar form. Exclude frequencies higher than
     # the sampling frequency
@@ -51,17 +63,17 @@ def azimuthalAverage(
 
     if mask is None:
         # mask is only used in a flat context
-        mask = np.ones(image.shape,dtype='bool').ravel()
+        mask = np.ones(image.shape, dtype="bool").ravel()
     elif len(mask.shape) > 1:
         mask = mask.ravel()
 
     # the 'bins' as initially defined are lower/upper bounds for each bin
     # so that values will be in [lower,upper)
-    nbins = int((np.round(r.max() / binsize)+1))
+    nbins = int((np.round(r.max() / binsize) + 1))
     maxbin = nbins * binsize
-    bins = np.linspace(0, maxbin, nbins+1)
+    bins = np.linspace(0, maxbin, nbins + 1)
     # but we're probably more interested in the bin centers than their left or right sides...
-    bin_centers = (bins[1:]+bins[:-1])/2.0
+    bin_centers = (bins[1:] + bins[:-1]) / 2.0
 
     # Find out which radial bin each point in the map belongs to
     whichbin = np.digitize(r.flat, bins)
@@ -72,70 +84,104 @@ def azimuthalAverage(
 
     # recall that bins are from 1 to nbins (which is expressed in array terms by arange(nbins)+1 or xrange(1,nbins+1) )
     # radial_prof.shape = bin_centers.shape
-    sampling_freq = (x.max()-x.min())/2.0
-    nbins_true = int(sampling_freq/binsize)
+    sampling_freq = (x.max() - x.min()) / 2.0
+    nbins_true = int(sampling_freq / binsize)
     bin_centers = bin_centers[0:nbins_true]
     if stddev:
-        radial_prof = np.array([image.flat[mask*(whichbin==b)].std() for b in xrange(1,nbins+1)])
+        radial_prof = np.array(
+            [image.flat[mask * (whichbin == b)].std() for b in range(1, nbins + 1)]
+        )
     elif sum_bin:
-        radial_prof = np.array([((image*weights).flat[mask*(whichbin == b)].sum()) for b in xrange(1, nbins_true+1)])
+        radial_prof = np.array(
+            [
+                ((image * weights).flat[mask * (whichbin == b)].sum())
+                for b in range(1, nbins_true + 1)
+            ]
+        )
     else:
-        radial_prof = np.array([((image*weights).flat[mask*(whichbin == b)].sum()) / (weights.flat[mask*(whichbin==b)].sum()) for b in xrange(1, nbins_true+1)])
+        radial_prof = np.array(
+            [
+                ((image * weights).flat[mask * (whichbin == b)].sum())
+                / (weights.flat[mask * (whichbin == b)].sum())
+                for b in range(1, nbins_true + 1)
+            ]
+        )
 
     # if normalize:
-        # radial_prof /= radial_prof.sum()
+    # radial_prof /= radial_prof.sum()
 
-    #import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 
     if interpnan:
-        radial_prof = np.interp(bin_centers,bin_centers[radial_prof==radial_prof],radial_prof[radial_prof==radial_prof],left=left,right=right)
+        radial_prof = np.interp(
+            bin_centers,
+            bin_centers[radial_prof == radial_prof],
+            radial_prof[radial_prof == radial_prof],
+            left=left,
+            right=right,
+        )
 
     if steps:
-        xarr = np.array(zip(bins[:-1],bins[1:])).ravel()
-        yarr = np.array(zip(radial_prof,radial_prof)).ravel()
-        return xarr,yarr
+        xarr = np.array(list(zip(bins[:-1], bins[1:]))).ravel()
+        yarr = np.array(list(zip(radial_prof, radial_prof))).ravel()
+        return xarr, yarr
     elif returnradii:
-        return bin_centers,radial_prof
+        return bin_centers, radial_prof
     elif return_nr:
-        return nr,bin_centers,radial_prof
+        return nr, bin_centers, radial_prof
     else:
         return radial_prof
 
-def azimuthalAverageBins(image,azbins,symmetric=None, center=None, **kwargs):
+
+def azimuthalAverageBins(image, azbins, symmetric=None, center=None, **kwargs):
     """ Compute the azimuthal average over a limited range of angles """
     y, x = np.indices(image.shape)
     if center is None:
-        center = np.array([(x.max()-x.min())/2.0, (y.max()-y.min())/2.0])
+        center = np.array([(x.max() - x.min()) / 2.0, (y.max() - y.min()) / 2.0])
     r = np.hypot(x - center[0], y - center[1])
     theta = np.arctan2(x - center[0], y - center[1])
-    theta[theta < 0] += 2*np.pi
-    theta_deg = theta*180.0/np.pi
+    theta[theta < 0] += 2 * np.pi
+    theta_deg = theta * 180.0 / np.pi
 
-    if isinstance(azbins,np.ndarray):
+    if isinstance(azbins, np.ndarray):
         pass
-    elif isinstance(azbins,int):
+    elif isinstance(azbins, int):
         if symmetric == 2:
-            azbins = np.linspace(0,90,azbins)
+            azbins = np.linspace(0, 90, azbins)
             theta_deg = theta_deg % 90
         elif symmetric == 1:
-            azbins = np.linspace(0,180,azbins)
+            azbins = np.linspace(0, 180, azbins)
             theta_deg = theta_deg % 180
         else:
-            azbins = np.linspace(0,360,azbins)
+            azbins = np.linspace(0, 360, azbins)
     else:
         raise ValueError("azbins must be an ndarray or an integer")
 
     azavlist = []
-    for blow,bhigh in zip(azbins[:-1],azbins[1:]):
+    for blow, bhigh in zip(azbins[:-1], azbins[1:]):
         mask = (theta_deg > (blow % 360)) * (theta_deg < (bhigh % 360))
-        rr,zz = azimuthalAverage(image,center=center,mask=mask,returnradii=True,**kwargs)
+        rr, zz = azimuthalAverage(
+            image, center=center, mask=mask, returnradii=True, **kwargs
+        )
         azavlist.append(zz)
 
-    return azbins,rr,azavlist
+    return azbins, rr, azavlist
 
-def radialAverage(image, center=None, stddev=False, returnAz=False, return_naz=False,
-        binsize=1.0, weights=None, steps=False, interpnan=False, left=None, right=None,
-        mask=None ):
+
+def radialAverage(
+    image,
+    center=None,
+    stddev=False,
+    returnAz=False,
+    return_naz=False,
+    binsize=1.0,
+    weights=None,
+    steps=False,
+    interpnan=False,
+    left=None,
+    right=None,
+    mask=None,
+):
     """
     Calculate the radially averaged azimuthal profile.
 
@@ -169,12 +215,12 @@ def radialAverage(image, center=None, stddev=False, returnAz=False, return_naz=F
     y, x = np.indices(image.shape)
 
     if center is None:
-        center = np.array([(x.max()-x.min())/2.0, (y.max()-y.min())/2.0])
+        center = np.array([(x.max() - x.min()) / 2.0, (y.max() - y.min()) / 2.0])
 
     r = np.hypot(x - center[0], y - center[1])
     theta = np.arctan2(x - center[0], y - center[1])
-    theta[theta < 0] += 2*np.pi
-    theta_deg = theta*180.0/np.pi
+    theta[theta < 0] += 2 * np.pi
+    theta_deg = theta * 180.0 / np.pi
 
     if weights is None:
         weights = np.ones(image.shape)
@@ -183,20 +229,20 @@ def radialAverage(image, center=None, stddev=False, returnAz=False, return_naz=F
 
     if mask is None:
         # mask is only used in a flat context
-        mask = np.ones(image.shape,dtype='bool').ravel()
+        mask = np.ones(image.shape, dtype="bool").ravel()
     elif len(mask.shape) > 1:
         mask = mask.ravel()
 
     # the 'bins' as initially defined are lower/upper bounds for each bin
     # so that values will be in [lower,upper)
-    nbins = (np.round(theta_deg.max() / binsize)+1)
+    nbins = np.round(theta_deg.max() / binsize) + 1
     maxbin = nbins * binsize
-    bins = np.linspace(0,maxbin,nbins+1)
+    bins = np.linspace(0, maxbin, nbins + 1)
     # but we're probably more interested in the bin centers than their left or right sides...
-    bin_centers = (bins[1:]+bins[:-1])/2.0
+    bin_centers = (bins[1:] + bins[:-1]) / 2.0
 
     # Find out which azimuthal bin each point in the map belongs to
-    whichbin = np.digitize(theta_deg.flat,bins)
+    whichbin = np.digitize(theta_deg.flat, bins)
 
     # how many per bin (i.e., histogram)?
     # there are never any in bin 0, because the lowest index returned by digitize is 1
@@ -205,50 +251,65 @@ def radialAverage(image, center=None, stddev=False, returnAz=False, return_naz=F
     # recall that bins are from 1 to nbins (which is expressed in array terms by arange(nbins)+1 or xrange(1,nbins+1) )
     # azimuthal_prof.shape = bin_centers.shape
     if stddev:
-        azimuthal_prof = np.array([image.flat[mask*(whichbin==b)].std() for b in xrange(1,nbins+1)])
+        azimuthal_prof = np.array(
+            [image.flat[mask * (whichbin == b)].std() for b in range(1, nbins + 1)]
+        )
     else:
-        azimuthal_prof = np.array([((image*weights).flat[mask*(whichbin==b)].sum()) / (weights.flat[mask*(whichbin==b)].sum()) for b in xrange(1,nbins+1)])
+        azimuthal_prof = np.array(
+            [
+                ((image * weights).flat[mask * (whichbin == b)].sum())
+                / (weights.flat[mask * (whichbin == b)].sum())
+                for b in range(1, nbins + 1)
+            ]
+        )
 
-    #import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 
     if interpnan:
-        azimuthal_prof = np.interp(bin_centers,
-            bin_centers[azimuthal_prof==azimuthal_prof],
-            azimuthal_prof[azimuthal_prof==azimuthal_prof],
-            left=left,right=right)
+        azimuthal_prof = np.interp(
+            bin_centers,
+            bin_centers[azimuthal_prof == azimuthal_prof],
+            azimuthal_prof[azimuthal_prof == azimuthal_prof],
+            left=left,
+            right=right,
+        )
 
     if steps:
-        xarr = np.array(zip(bins[:-1],bins[1:])).ravel()
-        yarr = np.array(zip(azimuthal_prof,azimuthal_prof)).ravel()
-        return xarr,yarr
+        xarr = np.array(list(zip(bins[:-1], bins[1:]))).ravel()
+        yarr = np.array(list(zip(azimuthal_prof, azimuthal_prof))).ravel()
+        return xarr, yarr
     elif returnAz:
-        return bin_centers,azimuthal_prof
-    elif return_nr:
-        return nr,bin_centers,azimuthal_prof
+        return bin_centers, azimuthal_prof
+    # elif return_nr:
+    #     return nr, bin_centers, azimuthal_prof
     else:
         return azimuthal_prof
 
-def radialAverageBins(image,radbins, corners=True, center=None, **kwargs):
+
+def radialAverageBins(image, radbins, corners=True, center=None, **kwargs):
     """ Compute the radial average over a limited range of radii """
     y, x = np.indices(image.shape)
     if center is None:
-        center = np.array([(x.max()-x.min())/2.0, (y.max()-y.min())/2.0])
+        center = np.array([(x.max() - x.min()) / 2.0, (y.max() - y.min()) / 2.0])
     r = np.hypot(x - center[0], y - center[1])
 
-    if isinstance(radbins,np.ndarray):
+    if isinstance(radbins, np.ndarray):
         pass
-    elif isinstance(radbins,int):
+    elif isinstance(radbins, int):
         if corners:
-            radbins = np.linspace(0,r.max(),radbins)
+            radbins = np.linspace(0, r.max(), radbins)
         else:
-            radbins = np.linspace(0,np.max(np.abs(np.array([x-center[0],y-center[1]]))),radbins)
+            radbins = np.linspace(
+                0, np.max(np.abs(np.array([x - center[0], y - center[1]]))), radbins
+            )
     else:
         raise ValueError("radbins must be an ndarray or an integer")
 
     radavlist = []
-    for blow,bhigh in zip(radbins[:-1],radbins[1:]):
-        mask = (r<bhigh)*(r>blow)
-        az,zz = radialAverage(image,center=center,mask=mask,returnAz=True,**kwargs)
+    for blow, bhigh in zip(radbins[:-1], radbins[1:]):
+        mask = (r < bhigh) * (r > blow)
+        az, zz = radialAverage(image, center=center, mask=mask, returnAz=True, **kwargs)
         radavlist.append(zz)
 
-    return radbins,az,radavlist
+    return radbins, az, radavlist
+

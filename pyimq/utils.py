@@ -29,16 +29,16 @@ def rescale_to_min_max(data, data_min, data_max):
     if len(data.shape) == 3:
         for i in range(data.shape[2]):
             if abs(data[:, :, i].max()) > abs(data[:, :, i].min()) or data_min == 0:
-                data[:, :, i] = data_max / data.max()*data[:, :, i]
+                data[:, :, i] = data_max / data.max() * data[:, :, i]
             else:
-                data[:, :, i] = data_min / data.min()*data[:, :, i]
+                data[:, :, i] = data_min / data.min() * data[:, :, i]
         return data
 
     else:
         if abs(data.max()) > abs(data.min()) or data_min == 0:
-            return data_max / data.max()*data
+            return data_max / data.max() * data
         else:
-            return data_min / data.min()*data
+            return data_min / data.min() * data
 
 
 def analyze_accumulation(x, fraction):
@@ -46,7 +46,7 @@ def analyze_accumulation(x, fraction):
     Analyze the accumulation by starting from the end of the data.
     """
     assert 0.0 < fraction <= 1.0
-    final = fraction*x.sum()
+    final = fraction * x.sum()
     index = 1
     while x[-index:].sum() < final:
         index += 1
@@ -58,15 +58,12 @@ def calculate_entropy(data):
     Calculate the Shannon entropy for data
     """
     # Calculate histogram
-    histogram = ndimage.histogram(
-        data,
-        data.min(),
-        data.max(), 50)
+    histogram = ndimage.histogram(data, data.min(), data.max(), 50)
     # Exclude zeros
     histogram = histogram[numpy.nonzero(histogram)]
     # Normalize histogram bins to sum to one
-    histogram = histogram.astype(float)/histogram.sum()
-    return -numpy.sum(histogram*numpy.log2(histogram))
+    histogram = histogram.astype(float) / histogram.sum()
+    return -numpy.sum(histogram * numpy.log2(histogram))
 
 
 def show_pics_from_disk(filenames, title="Image collage"):
@@ -90,14 +87,14 @@ def show_pics_from_disk(filenames, title="Image collage"):
         else:
             fig, subplots = plt.subplots(2, 2)
 
-        #fig.title(title)
+        # fig.title(title)
         i = 0
         j = 0
         k = 0
         while k < len(filenames):
             j = 0
             while j < subplots.shape[1] and k < len(filenames):
-                print(filenames[i+j])                
+                print((filenames[i + j]))
                 subplots[i, j].imshow(plt.imread(filenames[k]), cmap=plt.cm.hot)
                 subplots[i, j].set_title(os.path.basename(filenames[k]))
                 subplots[i, j].axis("off")

@@ -45,7 +45,9 @@ def main():
         # Get valid file names
         for image_name in os.listdir(path):
             real_path = os.path.join(path, image_name)
-            if not os.path.isfile(real_path) or not real_path.endswith((".jpg", ".tif", ".tiff", ".png")):
+            if not os.path.isfile(real_path) or not real_path.endswith(
+                (".jpg", ".tif", ".tiff", ".png")
+            ):
                 continue
             file_names.append(image_name)
         csv_data["Filename"] = file_names
@@ -55,12 +57,14 @@ def main():
 
     # Plot settings
     plt.ion()
-    plt.axis('off')
+    plt.axis("off")
 
     # Shuffle the data frame so that the order of the displayed images is mixed every time.
     csv_data = csv_data.sample(frac=1)
-    print("Images are graded on a scale 1-5, where 1 denotes a very bad image " \
-          "and 5 an excellent image")
+    print(
+        "Images are graded on a scale 1-5, where 1 denotes a very bad image "
+        "and 5 an excellent image"
+    )
 
     for image_name in csv_data["Filename"]:
         real_path = os.path.join(path, image_name)
@@ -70,10 +74,10 @@ def main():
 
         success = False
         while not success:
-            input = raw_input("Give grade: ")
+            grade = eval(input("Give grade: "))
 
-            if input.isdigit():
-                result = int(input)
+            if grade.isdigit():
+                result = int(grade)
             else:
                 print("Please give a numeric grade 1-5.")
                 continue
@@ -87,16 +91,7 @@ def main():
     csv_data[result_name] = results
     csv_data.to_csv(file_path, index=False)
 
+
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
 

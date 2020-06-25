@@ -18,22 +18,22 @@ import numpy
 
 from .. import script_options, myimage, filters
 
+
 def main():
     options = script_options.get_power_script_options(sys.argv[1:])
     path = options.working_directory
 
     assert os.path.isdir(path)
 
-
     # Create output directory
-    output_dir = datetime.datetime.now().strftime("%Y-%m-%d")+'_PyIQ_output'
+    output_dir = datetime.datetime.now().strftime("%Y-%m-%d") + "_PyIQ_output"
     output_dir = os.path.join(options.working_directory, output_dir)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
     # Create output file
     date_now = datetime.datetime.now().strftime("%H-%M-%S")
-    file_name = date_now + '_PyIQ_power_spectra' + '.csv'
+    file_name = date_now + "_PyIQ_power_spectra" + ".csv"
     file_path = os.path.join(output_dir, file_name)
 
     csv_data = pandas.DataFrame()
@@ -68,6 +68,7 @@ def main():
 
     csv_data.insert(0, "Power", numpy.linspace(0, 1, num=len(csv_data)))
     csv_data.to_csv(file_path, index=False)
+
 
 if __name__ == "__main__":
     main()
