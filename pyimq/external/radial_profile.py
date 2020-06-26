@@ -1,22 +1,7 @@
 import numpy as np
 
 
-def azimuthalAverage(
-    image,
-    center=None,
-    stddev=False,
-    returnradii=False,
-    return_nr=False,
-    binsize=0.5,
-    weights=None,
-    steps=False,
-    interpnan=False,
-    left=None,
-    right=None,
-    mask=None,
-    normalize=False,
-    sum_bin=False,
-):
+def azimuthal_average(image, **kwargs):
     """
     Calculate the azimuthally averaged radial profile.
 
@@ -46,6 +31,20 @@ def azimuthalAverage(
     lack of data, but users let me know if an alternative is prefered...
 
     """
+
+    center = kwargs.get("center", None)
+    stddev = kwargs.get("stddev", False)
+    returnradii = kwargs.get("returnradii", False)
+    return_nr = kwargs.get("return_nr", False)
+    binsize = kwargs.get("binsize", 0.5)
+    weights = kwargs.get("weights", None)
+    steps = kwargs.get("steps", False)
+    interpnan = kwargs.get("interpnan", False)
+    left = kwargs.get("left", None)
+    right = kwargs.get("right", None)
+    mask = kwargs.get("mask", None)
+    sum_bin = kwargs.get("sum_bin", False)
+
     # Calculate the indices from the image
     y, x = np.indices(image.shape)
 
@@ -107,16 +106,11 @@ def azimuthalAverage(
             ]
         )
 
-    # if normalize:
-    # radial_prof /= radial_prof.sum()
-
-    # import pdb; pdb.set_trace()
-
     if interpnan:
         radial_prof = np.interp(
             bin_centers,
-            bin_centers[radial_prof == radial_prof],
-            radial_prof[radial_prof == radial_prof],
+            bin_centers.ravel(),
+            radial_prof.ravel(),
             left=left,
             right=right,
         )
@@ -133,34 +127,34 @@ def azimuthalAverage(
         return radial_prof
 
 
-def azimuthalAverageBins(image, azbins, symmetric=None, center=None, **kwargs):
+def azimuthal_average_bins(image, azbins, symmetric=None, center=None, **kwargs):
     """ Compute the azimuthal average over a limited range of angles """
     y, x = np.indices(image.shape)
     if center is None:
         center = np.array([(x.max() - x.min()) / 2.0, (y.max() - y.min()) / 2.0])
-    r = np.hypot(x - center[0], y - center[1])
+
     theta = np.arctan2(x - center[0], y - center[1])
     theta[theta < 0] += 2 * np.pi
     theta_deg = theta * 180.0 / np.pi
 
-    if isinstance(azbins, np.ndarray):
-        pass
-    elif isinstance(azbins, int):
-        if symmetric == 2:
-            azbins = np.linspace(0, 90, azbins)
-            theta_deg = theta_deg % 90
-        elif symmetric == 1:
-            azbins = np.linspace(0, 180, azbins)
-            theta_deg = theta_deg % 180
+    if not isinstance(azbins, np.ndarray):
+        # pass
+        if isinstance(azbins, int):
+            if symmetric == 2:
+                azbins = np.linspace(0, 90, azbins)
+                theta_deg = theta_deg % 90
+            elif symmetric == 1:
+                azbins = np.linspace(0, 180, azbins)
+                theta_deg = theta_deg % 180
+            else:
+                azbins = np.linspace(0, 360, azbins)
         else:
-            azbins = np.linspace(0, 360, azbins)
-    else:
-        raise ValueError("azbins must be an ndarray or an integer")
+            raise ValueError("azbins must be an ndarray or an integer")
 
     azavlist = []
     for blow, bhigh in zip(azbins[:-1], azbins[1:]):
         mask = (theta_deg > (blow % 360)) * (theta_deg < (bhigh % 360))
-        rr, zz = azimuthalAverage(
+        rr, zz = azimuthal_average(
             image, center=center, mask=mask, returnradii=True, **kwargs
         )
         azavlist.append(zz)
@@ -168,20 +162,7 @@ def azimuthalAverageBins(image, azbins, symmetric=None, center=None, **kwargs):
     return azbins, rr, azavlist
 
 
-def radialAverage(
-    image,
-    center=None,
-    stddev=False,
-    returnAz=False,
-    return_naz=False,
-    binsize=1.0,
-    weights=None,
-    steps=False,
-    interpnan=False,
-    left=None,
-    right=None,
-    mask=None,
-):
+def radial_average(image, **kwargs):
     """
     Calculate the radially averaged azimuthal profile.
 
@@ -190,7 +171,7 @@ def radialAverage(
              None, which then uses the center of the image (including
              fractional pixels).
     stddev - if specified, return the radial standard deviation instead of the average
-    returnAz - if specified, return (azimuthArray,azimuthal_profile)
+    return_az - if specified, return (azimuthArray,azimuthal_profile)
     return_naz   - if specified, return number of pixels per azimuth *and* azimuth
     binsize - size of the averaging bin.  Can lead to strange results if
         non-binsize factors are used to specify the center and the binsize is
@@ -211,13 +192,23 @@ def radialAverage(
     lack of data, but users let me know if an alternative is prefered...
 
     """
+    center = kwargs.get("center", None)
+    stddev = kwargs.get("stddev", False)
+    return_az = kwargs.get("return_az", False)
+    return_naz = kwargs.get("return_naz", False)
+    binsize = kwargs.get("binsize", 1.0)
+    weights = kwargs.get("weights", None)
+    steps = kwargs.get("steps", False)
+    interpnan = kwargs.get("interpnan", False)
+    left = kwargs.get("left", None)
+    right = kwargs.get("right", None)
+    mask = kwargs.get("mask", None)
     # Calculate the indices from the image
     y, x = np.indices(image.shape)
 
     if center is None:
         center = np.array([(x.max() - x.min()) / 2.0, (y.max() - y.min()) / 2.0])
 
-    r = np.hypot(x - center[0], y - center[1])
     theta = np.arctan2(x - center[0], y - center[1])
     theta[theta < 0] += 2 * np.pi
     theta_deg = theta * 180.0 / np.pi
@@ -263,13 +254,11 @@ def radialAverage(
             ]
         )
 
-    # import pdb; pdb.set_trace()
-
     if interpnan:
         azimuthal_prof = np.interp(
             bin_centers,
-            bin_centers[azimuthal_prof == azimuthal_prof],
-            azimuthal_prof[azimuthal_prof == azimuthal_prof],
+            bin_centers.ravel(),
+            azimuthal_prof.ravel(),
             left=left,
             right=right,
         )
@@ -278,37 +267,39 @@ def radialAverage(
         xarr = np.array(list(zip(bins[:-1], bins[1:]))).ravel()
         yarr = np.array(list(zip(azimuthal_prof, azimuthal_prof))).ravel()
         return xarr, yarr
-    elif returnAz:
+    elif return_az:
         return bin_centers, azimuthal_prof
-    # elif return_nr:
-    #     return nr, bin_centers, azimuthal_prof
+    elif return_naz:
+        return nr, bin_centers, azimuthal_prof
     else:
         return azimuthal_prof
 
 
-def radialAverageBins(image, radbins, corners=True, center=None, **kwargs):
+def radial_average_bins(image, radbins, corners=True, center=None, **kwargs):
     """ Compute the radial average over a limited range of radii """
     y, x = np.indices(image.shape)
     if center is None:
         center = np.array([(x.max() - x.min()) / 2.0, (y.max() - y.min()) / 2.0])
     r = np.hypot(x - center[0], y - center[1])
 
-    if isinstance(radbins, np.ndarray):
-        pass
-    elif isinstance(radbins, int):
-        if corners:
-            radbins = np.linspace(0, r.max(), radbins)
+    if not isinstance(radbins, np.ndarray):
+        # pass
+        if isinstance(radbins, int):
+            if corners:
+                radbins = np.linspace(0, r.max(), radbins)
+            else:
+                radbins = np.linspace(
+                    0, np.max(np.abs(np.array([x - center[0], y - center[1]]))), radbins
+                )
         else:
-            radbins = np.linspace(
-                0, np.max(np.abs(np.array([x - center[0], y - center[1]]))), radbins
-            )
-    else:
-        raise ValueError("radbins must be an ndarray or an integer")
+            raise ValueError("radbins must be an ndarray or an integer")
 
     radavlist = []
     for blow, bhigh in zip(radbins[:-1], radbins[1:]):
         mask = (r < bhigh) * (r > blow)
-        az, zz = radialAverage(image, center=center, mask=mask, returnAz=True, **kwargs)
+        az, zz = radial_average(
+            image, center=center, mask=mask, return_az=True, **kwargs
+        )
         radavlist.append(zz)
 
     return radbins, az, radavlist

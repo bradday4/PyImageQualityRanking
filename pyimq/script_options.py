@@ -13,6 +13,10 @@ import argparse
 
 from pyimq import filters, myimage
 
+help_msg = "Defines the location of the working directory"
+dest = "working_directory"
+default_dir = "/home/sami/Pictures/Quality"
+
 
 def get_quality_script_options(arguments):
     parser = argparse.ArgumentParser(
@@ -23,10 +27,7 @@ def get_quality_script_options(arguments):
         "--file", help="Defines a path to the image files", default=None
     )
     parser.add_argument(
-        "--working-directory",
-        dest="working_directory",
-        help="Defines the location of the working directory",
-        default="/home/sami/Pictures/Quality",
+        "--working-directory", dest=dest, help=help_msg, default=default_dir,
     )
     parser.add_argument(
         "--mode",
@@ -77,10 +78,7 @@ def get_power_script_options(arguments):
         "directory"
     )
     parser.add_argument(
-        "--working-directory",
-        dest="working_directory",
-        help="Defines the location of the working directory",
-        default="/home/sami/Pictures/Quality",
+        "--working-directory", dest=dest, help=help_msg, default=default_dir,
     )
     parser.add_argument("--image-size", dest="image_size", type=int, default=512)
     parser = filters.get_common_options(parser)
@@ -99,10 +97,7 @@ def get_subjective_ranking_options(arguments):
         "script."
     )
     parser.add_argument(
-        "--working-directory",
-        dest="working_directory",
-        help="Defines the location of the working directory",
-        default="/home/sami/Pictures/Quality",
+        "--working-directory", dest=dest, help=help_msg, default=default_dir,
     )
 
     return parser.parse_args(arguments)

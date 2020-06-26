@@ -225,7 +225,7 @@ class FrequencyQuality(Filter):
         Convert a 2D centered power spectrum into 1D by averaging spectral
         power at different radiuses from the zero frequency center
         """
-        bin_centers, average = radprof.azimuthalAverage(
+        bin_centers, average = radprof.azimuthal_average(
             self.power, binsize=bin_size, returnradii=True,
         )
         dx = self.data.get_spacing()[0]
@@ -318,8 +318,6 @@ class FrequencyQuality(Filter):
         if self.power is not None:
             subplots[0].imshow(numpy.log10(self.power))
         if self.simple_power is not None:
-            index = int(len(self.simple_power[0]) * 0.4)
-            # subplots[1].plot(self.simple_power[0][index:], self.simple_power[1][index:], linewidth=1)
             subplots[1].plot(self.simple_power[0], self.simple_power[1], linewidth=1)
             subplots[1].set_yscale("log")
         plt.show()

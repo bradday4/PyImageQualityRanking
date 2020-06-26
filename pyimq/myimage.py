@@ -103,16 +103,18 @@ class MyImage(object):
         assert os.path.isfile(path)
 
         image = numpy.array(Image.open(path))
-        # image = utils.rescale_to_min_max(image, 0, 255)
 
         return cls(images=image, spacing=[1, 1])
 
     def __init__(self, images=None, spacing=None):
 
         self.images = numpy.array(images)
-        self.spacing = list(spacing)
+        if spacing is not None:
+            self.spacing = spacing
+        else:
+            self.spacing = [1, 1]
 
-        power = log10(spacing[0])
+        power = log10(self.spacing[0])
         if 3 < power <= 6:
             self.spacing_unit = "um"
         elif 6 < power <= 9:
