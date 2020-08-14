@@ -1,0 +1,17 @@
+{
+    "include": [
+        "pyimq"
+    ],
+    "exclude": [
+        "build**",
+        "build/lib"
+    ],
+    "reportMissingImports": true,
+    "reportMissingTypeStubs": true,
+    "executionEnvironments": [
+        {
+            "pythonVersion": "3.7",
+            "pythonPlatform": "Windows"
+        }
+    ]
+}

@@ -10,7 +10,7 @@ functionality required by the PyImageQualityRanking software.
 """
 
 import os
-import numpy
+import numpy as np
 import scipy.ndimage.interpolation as itp
 import argparse
 from PIL import Image
@@ -53,6 +53,14 @@ def get_options(parser):
         "grayscale average pixel value threshold here",
     )
     parser.add_argument(
+        "--bitdepth-filter",
+        dest="bitdepth_filter",
+        type=float,
+        default=0.0,
+        help="Analyze only images with an actual bitdepth greater than "
+        "the threshold here",
+    )
+    parser.add_argument(
         "--file-filter",
         dest="file_filter",
         default=None,
@@ -84,7 +92,7 @@ class MyImage(object):
         xresolution = image.tag.tags[X_RESOLUTION][0][0]
         yresolution = image.tag.tags[Y_RESOLUTION][0][0]
 
-        data = utils.rescale_to_min_max(numpy.array(image), 0, 255)
+        data = utils.rescale_to_min_max(np.array(image), 0, 255)
 
         if data.shape[0] == 1:
             data = data[0]
@@ -102,13 +110,13 @@ class MyImage(object):
         """
         assert os.path.isfile(path)
 
-        image = numpy.array(Image.open(path))
+        image = np.array(Image.open(path))
 
         return cls(images=image, spacing=[1, 1])
 
     def __init__(self, images=None, spacing=None):
 
-        self.images = numpy.array(images)
+        self.images = np.array(images)
         if spacing is not None:
             self.spacing = spacing
         else:
@@ -130,7 +138,7 @@ class MyImage(object):
     def __mul__(self, other):
         if isinstance(other, MyImage):
             return MyImage(self.images * other.images, self.spacing)
-        elif isinstance(other, (int, float, numpy.ndarray)):
+        elif isinstance(other, (int, float, np.ndarray)):
             return MyImage(self.images * other, self.spacing)
         else:
             return None
@@ -139,9 +147,7 @@ class MyImage(object):
         assert isinstance(other, MyImage)
         assert other.get_dimensions() == self.get_dimensions()
         result = (
-            (self.images.astype(numpy.int16) - other.images)
-            .clip(0, 255)
-            .astype(numpy.uint8)
+            (self.images.astype(np.int16) - other.images).clip(0, 255).astype(np.uint8)
         )
         return MyImage(result, self.spacing)
 
@@ -191,14 +197,19 @@ class MyImage(object):
         """
         Saves the image using PIL image.save() routine
         """
-        image = Image.fromarray(numpy.uint8(self.images))
+        image = Image.fromarray(np.uint8(self.images))
         image.save(filename)
 
     def average(self):
         """
         :return: Average grayscale pixel value of the image
         """
-        return numpy.mean(self.images)
+        return np.mean(self.images)
+
+    def bit_depth(self):
+        """Return actual bitdepth of image
+        """
+        return np.log2(np.nanmax(self.images) - np.nanmin(self.images))
 
     def crop_to_rectangle(self):
         """
